@@ -1,0 +1,11 @@
+.codex/
+.claude/
+.agent/
+.serena/
+.output/
+.vscode/
+.remember/
+*.pro.user
+*.pro
+*.tmp
+
