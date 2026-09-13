@@ -89,8 +89,8 @@ int main() {
      */
     
     /* Uncomment these to play with them */
-    stringToIntegerTest();
-    // bufferedExperiment();
+    // stringToIntegerTest();
+    bufferedExperiment(std::cout);
 
     // int a = endlEachTime();
     // int b = endlAtEnd();
@@ -112,10 +112,29 @@ int stringToInteger(const string& s) {
      * type conversion to convert string to integer.
      */
     istringstream iss(s);
-    printStateBits(iss);
+    printStateBits(iss);    // Check the input is vaild
+
     int result;
     iss >> result;
-    printStateBits(iss);
+    if (iss.fail()) throw std::domain_error("no value int at beginning!");
+
+    char remain;
+    iss >> remain;
+    if (!iss.fail()) throw std::domain_error("more than a single vaild int.");
+
+    /**
+     * Because the implicit conversion of streams,
+     * there's a functionally equivalent version:
+     * ```cpp
+     * if (!(iss >> result))
+     *      throw std::domain_error("no valur int at beginning!")
+     * if (iss >> remain)
+     *      throw std::domain_error("more than a single vaild int.")
+     * ```
+     */
+
+    printStateBits(iss);    // Check the buffer's status.
+
     return result;
 }
 
@@ -145,14 +164,14 @@ void bufferedExperiment(ostream& oss) {
     oss << "106";
     mindlessWork();
 
-    oss << flush;
-    mindlessWork();
+    // oss << flush;
+    // mindlessWork();
 
     oss << "L";
     mindlessWork();
 
     oss << endl;
-    mindlessWork();
+    // mindlessWork();
 }
 
 // This is how I feel about my classes this quarter
