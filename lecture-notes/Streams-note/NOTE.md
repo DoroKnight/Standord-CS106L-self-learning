@@ -78,3 +78,147 @@ example:
 2. Fail bit：先前的操作**失败**了，**将来所有的操作都被冻结**
 3. EOF bit：先前的操作碰见了 `EOF`，到达了缓冲区的末尾
 4. Bad bit：底层错误，通常难以恢复
+
+**注意**：
+1. `failbit` 表示**这次的格式化读取无法按照目标类型成功完成**，并不代表底层的流坏了，一般的触发条件如下：
+    - 没有可读取的类型对象
+    - 数字格式不完整
+    - 超出类型表示的范围
+    - 流已经处于失败的状态
+
+2. 在流读取的时候，对于整数对象，`-`只允许作为整数开头的符号，不能出现在已经读到数字之后
+
+流本身支持**链式赋值**，也就是说：
+```cpp
+istringstream iss;
+iss >> result1 >> result2;   // result* have been declared.
+```
+
+输入流和输出流表达式的返回值都是**流本身**，这也是链式操作的背后原理，同时流本身可以被重新解释为 `bool` 类型：
+```cpp
+if (!(iss >> integer))
+    throw std::domain_error("Fail to abstract an integer!")
+```
+
+## Part 3 flush 缓冲区刷新
+在 C++ 输出流中，数据通常不会每次 `<<` 都立刻写到终端或文件，而是先进入缓冲区，积累到一定程度后再统一输出，以提高性能。
+
+`std::flush`：
+`std::flush` 只刷新输出缓冲区，不会输出任何字符：
+```cpp
+std::cout << "Loading..." >> std::flush;
+```
+适合需要立即显示内容，但不想换行的场景。
+
+`std::endl`：
+`std::endl` 会做两件事：
+1. 输出换行符 `\n`
+2. 立即刷新输出缓冲区
+
+```cpp
+std::cout << "Hello, world" << std::endl;
+```
+大致等价于：
+```cpp
+std::cout << "Hello, world\n" << std::flush;
+```
+
+`std::endl` 会主动刷新缓冲区，但是频繁刷新缓冲区会严重影响性能，普通换行可以优先选择 `\n`
+再要求输出内容立即可见的时候使用 `std::endl` 或 `std::flush`
+
+## Part 4 Manipulators and Pad
+**流操纵符（stream manipulators）** 是插入到 `<<` 或 `>>` 表达式中，用来改变流的行为或格式的工具
+```cpp
+std::cout << std::hex << 255;   // Output: FF / ff
+```
+
+常用的操控符主要位于：
+```cpp
+#include <iostream>     // endl, flush, hex, dec, boolalpha 等
+#include <iomanip>      // setw, setfill, setprecision 等
+```
+
+常用的流操纵符包括：
+1. 换行与刷新：
+   ```cpp
+   std::endl    // Output '\n', then flush the buffer
+   std::flush   // Flush the buffer
+   ```
+2. 整数进制：
+   ```cpp
+   std::cout << std::dec << 255 << '\n';    // 255
+   std::cout << std::hex << 255 << '\n';    // ff
+   std::cout << std::oct << 255 << '\n';    // 377
+   ```
+   **注意**：这里的设置会持续生效，除非**显式的重新指定**，默认输出进制为十进制
+3. 布尔值格式
+   默认情况下，布尔值的输出为 `1` 或 `0`
+   ```cpp
+   std::cout << true;   // 1
+   ```
+   使用 `std::boolalpha` 后：
+   ```cpp
+   std::cout << std::boolalpha << true << ' ' << false; // Output: true false
+   ```
+   恢复：
+   ```cpp
+   std::cout << std::noboolalpha;
+   ```
+4. 浮点数格式
+   ```cpp
+   double value = 12.34567
+
+   std::cout << std::fixed
+             << std::setprecision(2)
+             << value;      // 12.35
+   ```
+
+   常见的浮点操控符：
+   ```cpp
+   std::fixed           // Fixed notation
+   std::setprecision()  // Set the precision
+   std::scientific      // Scientific notation
+   std::defaultfloat    // Restore the default notation
+   ```
+
+字符串字段的宽度和对应内容的填充都有相应的设置：
+- `std::setw(n)`
+  宽度设置，设置下一个输出项所占的最小宽度：
+  ```cpp
+  std::cout << '[' << std::setw(6) << 42 << ']';
+  /**
+   * Output: [    42]
+   * There are 4 whitespace front the '42'
+   */
+  ```
+  “宽度”只是最小宽度。如果内容本身更长，并不会被截断：
+  ```cpp
+  std::cout << std::setw(3) << "hello";
+  ```
+  同时，`setw` 通常只对紧接着地一个输出项生效：
+  ```cpp
+  std::cout << std::setw(5) << 1
+            << std::setw(5) << 2;
+  ```
+- `std::setfill(ch)`
+  设置宽度不足时使用的填充字符：
+  ```cpp
+  std::cout << std::setfill('*')
+            << std::setw(6)
+            << 42;
+  // Output: ****42
+  ```
+  `setfill` 会持续生效，除非**显式恢复**
+- 对齐 `left` 和 `right`
+  默认情况下是数字**右对齐**
+  ```cpp
+  std::cout << std::right << std::setw(8) << 42;
+  // "      42"
+  ```
+  可以使用 `left` 来指定**左对齐**
+  ```cpp
+  std::cout << std::left << std::setw(8) << 42;
+  // "42      "
+  ```
+
+更多的知识点可以查找[cppreference](https://cppreference.com/cpp/header/ostream)，或看之前的[C++PrimerPlus笔记](https://github.com/hangyu1234/Hakimi-s-Rough-Academic-Journey/blob/main/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B1%BB/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/C%2B%2BPrimerPlus.md)中的第 16.7 节
