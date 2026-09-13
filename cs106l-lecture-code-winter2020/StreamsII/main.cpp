@@ -4,6 +4,7 @@
 #include <iomanip> // for manipulators
 #include <fstream> // for file streams
 #include <vector> // for vector
+#include <string> // for getline
 // #include <stream>
 
 /* Lecture 1 Code, by Avery Wang, Jan. 9, 2020 */
@@ -21,6 +22,7 @@ void printStateBits(const istream& iss);
 std::vector<string> stringSplit(const string& str);
 void manipulatorFun();
 void printEndTime(const string& input);
+int getInteger(const std::string& prompt);
 
 
 // During lecture, fill in this main function
@@ -90,14 +92,14 @@ int main() {
     
     /* Uncomment these to play with them */
     // stringToIntegerTest();
-    bufferedExperiment(std::cout);
+    // bufferedExperiment(std::cout);
 
     // int a = endlEachTime();
     // int b = endlAtEnd();
     // cout << "endl each time: " << a << endl;
     // cout << "endl at end: " << b << endl;
 
-    // badWelcomeProgram();
+    badWelcomeProgram();
 
     return 0;
 }
@@ -224,6 +226,19 @@ int endlAtEnd() {
 // trouble (so don't use it in CS 106B!)
 // WE DID NOT GET TO THIS IN LECTURE, WILL BEGIN LECTURE 3 WITH THIS
 void badWelcomeProgram() {
+    /**
+     * Notes:
+     * When the fail bit is set, the cin's buffer will block.
+     * In other words: cin will stop and subsequent work will also
+     * be suspended.
+     * 
+     * eg:
+     * If I type "Doro Knight", the cin will go wrong.
+     * the result will be like this:
+     * What is your name? Doro Knight
+     * What is your age? Hello Doro (age 0)
+     * Do you want to try again? You said: [nothing here]
+     */
     string name, response;
     int age;
 
@@ -239,6 +254,24 @@ void badWelcomeProgram() {
     cin >> response;
 
     cout << "You said: " << response << endl;
+}
+
+/**
+ * For self-learner, I didn't downlowd the Stand0rd's Standand C++ Library
+ * Then I implement the function 'getInteger' as follows:
+ */
+int getInteger(const std::string& prompt = "") {
+    while (true) {
+        cout << prompt;
+        string line;
+        if (!getline(cin, line))
+            throw domain_error("No integer at the beginning found.");
+        istringstream iss(line);
+
+        int result; char remain;
+        if (iss >> result && !(iss >> remain)) 
+            return result;
+    }
 }
 
 // Takes in any istream and prints the state bits
@@ -313,6 +346,28 @@ void printEndTime(const string& input) {
     // you fill this out!
 }
 
+/**
+ * Write the following function which prompts 
+ * the user for a filename, opens the ifstream to
+ * the file, reprompt if the filename is not vaild 
+ * and then return the filename
+ */
+string promptUserForFile(ifstream& stream,
+                         string prompt = "",
+                         string reprompt = "") {
+    cout << prompt;
+    string filename;
+    while (true) {
+        getline(cin, filename);
+        stream.open(filename);
+        
+        if (!stream.is_open()) {
+            cout << reprompt;
+        } else {
+            return filename;
+        }
+    }
+}
 
 
 

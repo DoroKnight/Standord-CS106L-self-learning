@@ -1,6 +1,6 @@
 <div align="center">
 
-# Stream Note
+# Stream Note and Type Note
 </div>
 
 ---
@@ -17,9 +17,9 @@
 - `g = get`：读取位置，比如 `istringstream`
 - `p = put`：写入位置，比如 `ostringstream`
 
-| 操作 | 读取位置 | 写入位置 |
-| :--: | :--: | :--: |
-| 查看当前位置 | `tellg()` | `tellp()` | 
+|      操作      |   读取位置   |   写入位置   |
+| :------------: | :----------: | :----------: |
+|  查看当前位置  |  `tellg()`   |  `tellp()`   |
 | 移动到指定位置 | `seekg(pos)` | `seekp(pos)` |
 
 example:
@@ -222,3 +222,113 @@ std::cout << std::hex << 255;   // Output: FF / ff
   ```
 
 更多的知识点可以查找[cppreference](https://cppreference.com/cpp/header/ostream)，或看之前的[C++PrimerPlus笔记](https://github.com/hangyu1234/Hakimi-s-Rough-Academic-Journey/blob/main/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B1%BB/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/C%2B%2BPrimerPlus.md)中的第 16.7 节
+
+## Part 5 cin 输入流对象
+`cin` 是一个标准输入流对象，通常用于从键盘中读取数据
+
+在 `cin` 工作时，键入的文本会进入 `cin` 的缓冲区中，使用**流插入运算符**来对对应变量进行赋值。
+
+注意：`>>` 会自动忽略所有的前导空白符，读取内容直到到达下一个空白字符之前（这个时候停止位置之后的空白字符仍然在 `cin` 的缓冲区中），也就是说，`cin` 缓冲区中的空白符只有在下一个 `cin` 操作时才会消耗
+
+更详细的内容可以看之前的[C++PrimerPlus笔记](https://github.com/hangyu1234/Hakimi-s-Rough-Academic-Journey/blob/main/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B1%BB/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/C++PrimerPlus.md#168-cin--%E7%9A%84%E8%AF%BB%E5%8F%96%E8%A7%84%E5%88%99)中的 16.8 节。
+
+值得注意的是：
+当状态位被设置后，**缓冲区本身不会自动清空**，只是流对象进入了某种错误的状态，后续的读写操作通常会停止
+
+`getline()` 函数：
+停止位置在换行符的后面，**并且会自动地删除 `\n`**，更多细节可以看[C++PrimerPlus笔记](https://github.com/hangyu1234/Hakimi-s-Rough-Academic-Journey/blob/main/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B1%BB/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/C%2B%2BPrimerPlus.md)中的 3.4.4 节。
+**注意**，`getline()` 很难因为错误而停止，但也不是没有：**如果输入流对象本身出现了问题（被设置了 fail bit），这个时候 `getline()` 会出错而停止**。
+
+## Part 6 pair/tuple 类型
+`pair` 和 `tuple` 都是**把若干个类型（可以不同值），打包成一个对象**
+
+### `pair`：固定装两个值
+```cpp
+#include <utility>
+std::pair<double, int> princes{3.4, 5};
+```
+
+`pair` 包含两个成员 `pair.first` 和 `pair.second`，分别对应指定的类型的内部对象
+
+`pair` 常用于函数一次返回两个结果：
+```cpp
+std::pair<int, int> divide(int dividend, int divisor) {
+    return {dividend / divisor, dividend % divisor};
+}
+
+auto result = divide(17, 5);
+
+std::cout << result.first;   // 3：商
+std::cout << result.second;  // 2：余数
+```
+
+### `tuple`：可以装任意固定数量的值
+```cpp
+#include <tuple>
+auto values = std::make_tuple(3, 4, "hi");
+```
+上述代码可以近似理解为:
+```cpp
+std::tuple<int, int, const char*> values;
+```
+
+`tuple` 没有 `.first`，`.second` 成员，只能通过 `std::get<index>` 来访问：
+```cpp
+std::get<0>(values);  // 3
+std::get<1>(values);  // 4
+std::get<2>(values);  // "hi"
+```
+
+这里的下标必须是**编译期常量**，不能通过 `const + 变量` 的形式。
+
+## Part 7 结构化绑定
+**结构化绑定（structured bindings）** 是 C++17 引入的语法，用来把一个**包含多个成员的对象**拆成若干个**具名变量**
+
+### 基本语法
+```cpp
+auto [variable1, variable2, ...] = expression;
+```
+比如：
+```cpp
+std::pair<std::string, int> student{"Alice", 95};
+
+auto [name, score] = student;
+
+std::cout << name << ": " << score << '\n';
+```
+
+### auto 的不同使用方式会影响最终效果
+1. `auto`：复制
+   ```cpp
+   std::pair<int, int> point{10, 20};
+
+   auto [x, y] = point;
+   x = 100;
+
+   std::cout << point.first;  // 仍然是 10
+   ```
+
+2. `auto&`：绑定引用
+   ```cpp
+   std::pair<int, int> point{10, 20};
+
+   auto& [x, y] = point;
+   x = 100;
+
+   std::cout << point.first;    // 100
+   ```
+
+3. `const auto&`：只读引用
+   ```cpp
+   const auto& [x, y] = point;
+
+   std::cout << x << ' ' << y;
+   // x = 100;      Error! x is read-only.
+   ```
+
+### 可拆解对象
+结构化绑定常见的拆解对象有：
+1. **数组**（变量数量必须和数组元素一致）
+2. `pair`
+3. `tuple`
+4. **简单结构体**（结构化绑定按照成员的声明顺序进行拆解，因此变量的顺序很重要）
