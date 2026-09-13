@@ -1,6 +1,6 @@
 <div align="center">
-# Stanford CS106L Learning Repo
 
+# Stanford CS106L Learning Repo
 </div>
 
 ---
@@ -15,6 +15,7 @@ cs106l-assignments-winter2020/ ：CS106L Winter2020 课程作业代码
 winter2020-tar/ ：CS106L Winter2020 课程资源
 
 课程网站：
+
 Winter2020：
 https://web.stanford.edu/class/archive/cs/cs106l/cs106l.1204/index.html
 
